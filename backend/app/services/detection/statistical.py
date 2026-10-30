@@ -5,47 +5,106 @@ from pydantic import BaseModel, Field
 
 
 class CoOccurrence(BaseModel):
-    """Represents a co-occurrence of a gender entity with a role/activity."""
+    """
+    Represents a surface lexical co-occurrence of a gender term with a role/activity keyword
+    within a sliding token proximity window.
+    
+    LIMITATION NOTE:
+    Lexical proximity does NOT establish grammatical subject-action dependency or semantic endorsement.
+    It indicates proximity only.
+    """
     gender_term: str
     gender: str  # "male" or "female"
     associated_term: str
-    category: str  # "DOMESTIC_ROLE", "OCCUPATIONAL_BIAS", "TRAIT_BIAS"
-    direction: str  # "STEREOTYPICAL", "COUNTER_STEREOTYPICAL", "NEUTRAL"
+    category: str  # "DOMESTIC_ROLE", "OCCUPATIONAL_BIAS"
+    evidence_indicator: str = Field(
+        description="POTENTIAL_STEREOTYPICAL_ASSOCIATION, POTENTIAL_COUNTER_STEREOTYPICAL_ASSOCIATION, or INSUFFICIENT_CONTEXT"
+    )
+    attribution_confidence: str = Field(
+        default="AMBIGUOUS_LEXICAL_PROXIMITY",
+        description="AMBIGUOUS_LEXICAL_PROXIMITY: Syntax/dependency parsing required to verify true subject attribution."
+    )
     context_snippet: str
     token_distance: int
 
 
 class StatisticalAnalysisResult(BaseModel):
-    """Structured deterministic gender balance analysis result."""
-    male_count: int = Field(default=0, description="Total count of male indicators")
-    female_count: int = Field(default=0, description="Total count of female indicators")
+    """
+    Structured deterministic gender reference frequency and lexical co-occurrence analysis.
+    
+    CRITICAL METHODOLOGICAL BOUNDARIES:
+    1. Reference Frequency != Unique Characters:
+       This metric counts occurrences of gendered lexical tokens (pronouns and kinship nouns).
+       Repeated references to the same individual (e.g. 'he... he... his...') are counted multiple times.
+       Unique character count requires entity coreference resolution.
+    2. Representation Imbalance != Stereotype:
+       A skewed gender reference frequency ratio does not establish stereotype presence.
+       It indicates quantitative asymmetry in lexical mentions.
+    3. Lexical Co-occurrence != Confirmed Stereotype:
+       Surface keyword proximity within a window cannot confirm gender-role attribution.
+       It provides initial candidate evidence indicators for subsequent neural/syntactic verification.
+    """
+    # Reference counts (Token frequency, NOT unique character count)
+    male_count: int = Field(default=0, description="Total count of male lexical indicators")
+    female_count: int = Field(default=0, description="Total count of female lexical indicators")
     male_pronoun_count: int = Field(default=0)
     female_pronoun_count: int = Field(default=0)
     male_noun_count: int = Field(default=0)
     female_noun_count: int = Field(default=0)
     total_gender_count: int = Field(default=0)
+
+    # Renamed explicit metric dictionary to prevent confusion with unique entity count
+    gendered_reference_frequency: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Frequencies of gendered token mentions: {'male': N, 'female': N, 'total': N}"
+    )
+
+    # Statistical representation ratios
     male_ratio: float = Field(default=0.5, description="R_gender = N_male / (N_male + N_female)")
     female_ratio: float = Field(default=0.5)
-    imbalance_status: str = Field(default="INSUFFICIENT_DATA", description="BALANCED, MALE_SKEWED, FEMALE_SKEWED, or INSUFFICIENT_DATA")
-    is_imbalanced: bool = Field(default=False)
+
+    # Representation skew status (Configurable heuristic thresholds, NOT universal ground truth)
+    imbalance_status: str = Field(
+        default="INSUFFICIENT_DATA",
+        description="BALANCED, MALE_SKEWED, FEMALE_SKEWED, or INSUFFICIENT_DATA"
+    )
+    is_imbalanced: bool = Field(
+        default=False,
+        description="Heuristic flag: True if mentions >= min_mentions and ratio exceeds upper/lower thresholds"
+    )
+
+    # Co-occurrence signals (Potential evidence indicators only)
+    signal_type: str = Field(
+        default="NO_STRONG_LEXICAL_SIGNAL",
+        description="POTENTIAL_STEREOTYPICAL_ASSOCIATION, POTENTIAL_COUNTER_STEREOTYPICAL_ASSOCIATION, MIXED_SIGNALS, INSUFFICIENT_CONTEXT, or NO_STRONG_LEXICAL_SIGNAL"
+    )
     co_occurrences: List[CoOccurrence] = Field(default_factory=list)
     male_terms_found: List[str] = Field(default_factory=list)
     female_terms_found: List[str] = Field(default_factory=list)
+
+    # Audit & limitation metadata
+    warnings: List[str] = Field(default_factory=list)
+    limitations: List[str] = Field(
+        default_factory=lambda: [
+            "Measures token reference frequency, not unique character counts (no coreference resolution).",
+            "Co-occurrences are based solely on token proximity window, not syntactic dependency parse.",
+            "Lexical matching does not detect negation, hypothetical modality, or meta-discussions rejecting bias.",
+            "Representation imbalance is strictly quantitative and does not independently prove stereotype presence."
+        ]
+    )
     execution_time_ms: float = Field(default=0.0)
 
 
 class StatisticalRepresentationAnalyzer:
     """
-    Deterministic NLP Analyzer for Textbook Gender Representation.
+    Deterministic Lightweight NLP Analyzer for Textbook Gender Reference Frequency.
     
     Computes:
-    - Pronoun frequencies (he/him/his vs. she/her/hers)
-    - Kinship & noun frequencies (father/son/boy vs. mother/daughter/girl)
-    - Male-to-Female Representation Ratio:
+    - Gendered token reference frequencies (pronouns and kinship nouns)
+    - Male-to-Female Reference Ratio:
         R_gender = N_male / (N_male + N_female)
-    - Threshold-gated Representation Skew:
-        Flagged if R_gender > 0.75 or R_gender < 0.25 (with >= min_mentions)
-    - Co-occurrence window tracker pairing gender terms with domestic verbs and occupational titles.
+    - Threshold-gated Reference Imbalance (Initial heuristic thresholds: default 0.75 / 0.25, min 4 mentions)
+    - Proximity-based candidate co-occurrence indicators with explicit attribution limitations
     """
 
     MALE_PRONOUNS = {"he", "him", "his", "himself"}
@@ -98,12 +157,15 @@ class StatisticalRepresentationAnalyzer:
 
     def analyze(self, text: str) -> StatisticalAnalysisResult:
         """
-        Analyzes a passage or chunk for deterministic gender statistics and co-occurrences.
+        Analyzes text for deterministic gender reference frequencies and proximity co-occurrences.
         """
         start_time = time.perf_counter()
 
         if not text or not text.strip():
-            return StatisticalAnalysisResult(execution_time_ms=0.0)
+            return StatisticalAnalysisResult(
+                signal_type="INSUFFICIENT_CONTEXT",
+                execution_time_ms=0.0
+            )
 
         raw_tokens = self._word_re.findall(text)
         lower_tokens = [t.lower() for t in raw_tokens]
@@ -140,10 +202,15 @@ class StatisticalRepresentationAnalyzer:
             male_ratio = 0.5
             female_ratio = 0.5
 
-        # Determine representation skew
+        # Determine reference imbalance status
+        warnings = []
         if total_gender_count < self.min_mentions_for_skew:
             imbalance_status = "INSUFFICIENT_DATA"
             is_imbalanced = False
+            if total_gender_count > 0:
+                warnings.append(
+                    f"Total gender references ({total_gender_count}) below minimum threshold ({self.min_mentions_for_skew}); ratio is statistically unreliable."
+                )
         elif male_ratio > self.skew_upper_threshold:
             imbalance_status = "MALE_SKEWED"
             is_imbalanced = True
@@ -154,8 +221,29 @@ class StatisticalRepresentationAnalyzer:
             imbalance_status = "BALANCED"
             is_imbalanced = False
 
-        # Compute co-occurrences within sliding window
+        # Compute proximity-based co-occurrences
         co_occurrences = self._detect_co_occurrences(lower_tokens, raw_tokens, token_gender_map)
+
+        if len(co_occurrences) > 0:
+            warnings.append(
+                "Co-occurrences reflect window proximity and are classified as AMBIGUOUS_LEXICAL_PROXIMITY. Grammatical subject attribution is not verified."
+            )
+
+        # Derive potential evidence signal type
+        if total_gender_count == 0:
+            signal_type = "NO_STRONG_LEXICAL_SIGNAL"
+        elif len(co_occurrences) == 0:
+            signal_type = "NO_STRONG_LEXICAL_SIGNAL"
+        else:
+            indicators = set(c.evidence_indicator for c in co_occurrences)
+            if "POTENTIAL_STEREOTYPICAL_ASSOCIATION" in indicators and "POTENTIAL_COUNTER_STEREOTYPICAL_ASSOCIATION" in indicators:
+                signal_type = "MIXED_SIGNALS"
+            elif "POTENTIAL_STEREOTYPICAL_ASSOCIATION" in indicators:
+                signal_type = "POTENTIAL_STEREOTYPICAL_ASSOCIATION"
+            elif "POTENTIAL_COUNTER_STEREOTYPICAL_ASSOCIATION" in indicators:
+                signal_type = "POTENTIAL_COUNTER_STEREOTYPICAL_ASSOCIATION"
+            else:
+                signal_type = "NO_STRONG_LEXICAL_SIGNAL"
 
         elapsed_ms = round((time.perf_counter() - start_time) * 1000.0, 3)
 
@@ -167,13 +255,20 @@ class StatisticalRepresentationAnalyzer:
             male_noun_count=len(male_nouns_found),
             female_noun_count=len(female_nouns_found),
             total_gender_count=total_gender_count,
+            gendered_reference_frequency={
+                "male": male_count,
+                "female": female_count,
+                "total": total_gender_count
+            },
             male_ratio=male_ratio,
             female_ratio=female_ratio,
             imbalance_status=imbalance_status,
             is_imbalanced=is_imbalanced,
+            signal_type=signal_type,
             co_occurrences=co_occurrences,
             male_terms_found=male_pronouns_found + male_nouns_found,
             female_terms_found=female_pronouns_found + female_nouns_found,
+            warnings=warnings,
             execution_time_ms=elapsed_ms
         )
 
@@ -183,7 +278,7 @@ class StatisticalRepresentationAnalyzer:
         raw_tokens: List[str],
         token_gender_map: List[Tuple[int, str, str]]
     ) -> List[CoOccurrence]:
-        """Identifies gender terms co-occurring with domestic or leadership/occupational terms."""
+        """Identifies gender terms co-occurring within sliding proximity window with role keywords."""
         results: List[CoOccurrence] = []
         n_tokens = len(lower_tokens)
 
@@ -198,9 +293,13 @@ class StatisticalRepresentationAnalyzer:
                 target_token = lower_tokens[target_idx]
                 dist = abs(target_idx - g_idx)
 
-                # Domestic role association
+                # Domestic role proximity
                 if target_token in self.DOMESTIC_CARE_TERMS:
-                    direction = "STEREOTYPICAL" if gender == "female" else "COUNTER_STEREOTYPICAL"
+                    indicator = (
+                        "POTENTIAL_STEREOTYPICAL_ASSOCIATION"
+                        if gender == "female"
+                        else "POTENTIAL_COUNTER_STEREOTYPICAL_ASSOCIATION"
+                    )
                     snippet_start = max(0, min(g_idx, target_idx) - 2)
                     snippet_end = min(n_tokens, max(g_idx, target_idx) + 3)
                     snippet = " ".join(raw_tokens[snippet_start:snippet_end])
@@ -210,14 +309,19 @@ class StatisticalRepresentationAnalyzer:
                         gender=gender,
                         associated_term=raw_tokens[target_idx],
                         category="DOMESTIC_ROLE",
-                        direction=direction,
+                        evidence_indicator=indicator,
+                        attribution_confidence="AMBIGUOUS_LEXICAL_PROXIMITY",
                         context_snippet=snippet,
                         token_distance=dist
                     ))
 
-                # Leadership / STEM / Occupational association
+                # Leadership / STEM / Occupational proximity
                 elif target_token in self.LEADERSHIP_STEM_TERMS:
-                    direction = "STEREOTYPICAL" if gender == "male" else "COUNTER_STEREOTYPICAL"
+                    indicator = (
+                        "POTENTIAL_STEREOTYPICAL_ASSOCIATION"
+                        if gender == "male"
+                        else "POTENTIAL_COUNTER_STEREOTYPICAL_ASSOCIATION"
+                    )
                     snippet_start = max(0, min(g_idx, target_idx) - 2)
                     snippet_end = min(n_tokens, max(g_idx, target_idx) + 3)
                     snippet = " ".join(raw_tokens[snippet_start:snippet_end])
@@ -227,7 +331,8 @@ class StatisticalRepresentationAnalyzer:
                         gender=gender,
                         associated_term=raw_tokens[target_idx],
                         category="OCCUPATIONAL_BIAS",
-                        direction=direction,
+                        evidence_indicator=indicator,
+                        attribution_confidence="AMBIGUOUS_LEXICAL_PROXIMITY",
                         context_snippet=snippet,
                         token_distance=dist
                     ))
