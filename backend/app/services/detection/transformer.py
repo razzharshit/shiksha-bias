@@ -14,6 +14,8 @@ class DetectionResult:
     end_char: int
     surrounding_context: str
     tokens: List[str]
+    prob_stereotype: float = 0.5
+    prob_anti_stereotype: float = 0.5
 
 
 class TransformerClassifier:
@@ -74,6 +76,10 @@ class TransformerClassifier:
             classification = id2label.get(pred_idx, "stereotype" if pred_idx == 1 else "anti_stereotype")
             confidence = float(probs[pred_idx])
 
+            # Explicit class probabilities (class 1: stereotype, class 0: anti_stereotype)
+            p_stereo = float(probs[1]) if len(probs) > 1 else (confidence if classification == "stereotype" else 1.0 - confidence)
+            p_anti = float(probs[0]) if len(probs) > 1 else (confidence if classification == "anti_stereotype" else 1.0 - confidence)
+
             # Extract token attribution span from attention heads
             evidence_span, start_char, end_char = self._extract_attention_span(clean_text, outputs.attentions, inputs)
             tokens = [self.tokenizer.decode([t]) for t in inputs['input_ids'][0]]
@@ -85,7 +91,9 @@ class TransformerClassifier:
                 start_char=start_char,
                 end_char=end_char,
                 surrounding_context=surrounding_context or clean_text,
-                tokens=tokens
+                tokens=tokens,
+                prob_stereotype=round(p_stereo, 4),
+                prob_anti_stereotype=round(p_anti, 4)
             )
         else:
             # Heuristic span extractor fallback prior to Colab model weights download
@@ -131,7 +139,9 @@ class TransformerClassifier:
                     start_char=m.start(),
                     end_char=m.end(),
                     surrounding_context=context or text,
-                    tokens=text.split()
+                    tokens=text.split(),
+                    prob_stereotype=0.88,
+                    prob_anti_stereotype=0.12
                 )
         return DetectionResult(
             classification="neutral",
@@ -140,6 +150,8 @@ class TransformerClassifier:
             start_char=0,
             end_char=min(50, len(text)),
             surrounding_context=context or text,
-            tokens=text.split()
+            tokens=text.split(),
+            prob_stereotype=0.50,
+            prob_anti_stereotype=0.50
         )
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Text, Boolean, Integer, Enum as SQLEnum, ForeignKey
+from sqlalchemy import Column, String, Float, Text, Boolean, Integer, JSON, Enum as SQLEnum, ForeignKey
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 from app.models.enums import BinaryClassification, TaxonomyCategory, ContextualOutcome
@@ -25,6 +25,7 @@ class Detection(BaseModel):
     surrounding_context = Column(Text, nullable=True)
     detection_method = Column(String(50), nullable=False, default="HYBRID")
     is_suppressed = Column(Boolean, nullable=False, default=False)
+    audit_metadata = Column(JSON, nullable=True)
     
     # Relationships
     chunk = relationship("Chunk", back_populates="detections")
