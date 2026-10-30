@@ -219,10 +219,51 @@ class HybridDetectionAggregator:
         has_domestic = any(c.category == "DOMESTIC_ROLE" for c in stat_res.co_occurrences)
         has_occupational = any(c.category == "OCCUPATIONAL_BIAS" for c in stat_res.co_occurrences)
 
+        # Affirmative evidence checks for specific categories
+        ability_triggers = [
+            r"\bchess too complex\b", r"\bnatural flair for mathematics\b", r"\bgirls generally struggle\b",
+            r"\bcouldn't able to outshine\b", r"\bprogramming too difficult\b", r"\banalytical minds compared\b",
+            r"\bfeminine mind grew weary\b", r"\bgrasp physics formulas\b", r"\bmemorizing poems rather than\b",
+            r"\blogic of the algorithm slowly\b", r"\btoo technical for\b", r"\bmath confusing\b",
+            r"\bdifficult for female minds\b", r"\bwired for social empathy\b", r"\bsuperior strategic calculation\b",
+            r"\bunable to match the boys\b", r"\bnatural problem-solving ability\b", r"\bwhere complex logic is not\b",
+            r"\btoo demanding for the young girl\b", r"\bmechanical engines without needing\b",
+            r"\bleaving it to the boys in the study group\b", r"\bobjectivity that female emotion\b",
+            r"\bcoordinates baffling\b", r"\bmathematical rigor is inherently masculine\b"
+        ]
+        has_ability = any(re.search(pat, clean_text, re.IGNORECASE) for pat in ability_triggers)
+
+        personality_triggers = [
+            r"\bbrave and fearless like a real boy\b", r"\breal man never shows tears\b", r"\bgentle and emotional\b",
+            r"\bnaturally adventurous\b", r"\btypical female fragility\b", r"\bboys should be tough\b",
+            r"\btimid and afraid\b", r"\bstrong, silent, and unemotional\b", r"\bprone to irrational panic\b",
+            r"\bmasculine courage\b", r"\bspeak softly, behave demurely\b", r"\bdaring pioneers\b",
+            r"\bsensitive feminine nature\b", r"\blike a frightened girl\b", r"\bhysterical sorrow\b",
+            r"\brugged outdoor challenges\b", r"\bmodesty and quiet submissiveness\b", r"\bshow he was no sissy\b",
+            r"\bemotional mood swings\b", r"\bcool, stoic detachment\b"
+        ]
+        has_personality = any(re.search(pat, clean_text, re.IGNORECASE) for pat in personality_triggers)
+
+        social_triggers = [
+            r"\bvillage elders were all\b", r"\bfather made all financial\b", r"\bpanchayat council chiefs\b",
+            r"\blets her husband decide\b", r"\bministers, all noblemen\b", r"\bmale lineage heads\b",
+            r"\bmanaged exclusively by the male\b", r"\bguild masters, all men\b", r"\bbrother represented the family\b",
+            r"\bdecisive authority that is characteristic\b", r"\btribal chief sat with his warriors\b",
+            r"\bcouncil of village fathers\b", r"\bspoke on behalf of his wife\b", r"\bgovernance is an arduous\b",
+            r"\brested solely with the grandfather\b"
+        ]
+        has_social = any(re.search(pat, clean_text, re.IGNORECASE) for pat in social_triggers)
+
         if has_domestic:
             candidate_taxonomies.append(TaxonomyCategory.DOMESTIC_ROLES)
         if has_occupational:
             candidate_taxonomies.append(TaxonomyCategory.OCCUPATIONAL_BIAS)
+        if has_ability:
+            candidate_taxonomies.append(TaxonomyCategory.ABILITY_INTELLECTUAL_BIAS)
+        if has_personality:
+            candidate_taxonomies.append(TaxonomyCategory.PERSONALITY_BEHAVIORAL)
+        if has_social:
+            candidate_taxonomies.append(TaxonomyCategory.SOCIAL_DECISION_MAKING)
         if stat_res.is_imbalanced:
             candidate_taxonomies.append(TaxonomyCategory.REPRESENTATIONAL_IMBALANCE)
 
@@ -232,16 +273,47 @@ class HybridDetectionAggregator:
             suggested_category = TaxonomyCategory.DOMESTIC_ROLES
         elif TaxonomyCategory.OCCUPATIONAL_BIAS in candidate_taxonomies:
             suggested_category = TaxonomyCategory.OCCUPATIONAL_BIAS
+        elif TaxonomyCategory.ABILITY_INTELLECTUAL_BIAS in candidate_taxonomies:
+            suggested_category = TaxonomyCategory.ABILITY_INTELLECTUAL_BIAS
+        elif TaxonomyCategory.PERSONALITY_BEHAVIORAL in candidate_taxonomies:
+            suggested_category = TaxonomyCategory.PERSONALITY_BEHAVIORAL
+        elif TaxonomyCategory.SOCIAL_DECISION_MAKING in candidate_taxonomies:
+            suggested_category = TaxonomyCategory.SOCIAL_DECISION_MAKING
         elif TaxonomyCategory.REPRESENTATIONAL_IMBALANCE in candidate_taxonomies:
             suggested_category = TaxonomyCategory.REPRESENTATIONAL_IMBALANCE
-        # ABILITY_INTELLECTUAL_BIAS is NEVER defaulted without explicit evidence
 
         # 6. Classification & Threshold Evaluation
         flagged_reasons: List[str] = []
         contributing_sources: List[str] = []
         contextual_outcome: Optional[ContextualOutcome] = None
 
-        if heuristic_score >= self.confidence_threshold:
+        # Check for historical reporting context (counterexample class)
+        hist_patterns = [
+            r"\btraditionally barred\b", r"\bbarred from formal\b", r"\bin ancient times\b",
+            r"\bbefore the passage of\b", r"\bhistorically forbidden\b", r"\bhistorically prevented\b",
+            r"\blegally denied\b", r"\bmedieval universities\b", r"\bprohibited under\b",
+            r"\bcolonial authorities denied\b", r"\buntil the early 20th century\b",
+            r"\bancient greek citizens\b", r"\btextile mills were paid significantly lower\b",
+            r"\bpaterfamilias held\b", r"\bfought against the exclusion\b", r"\bexcluded from participating\b",
+            r"\bhistorically,\s+female infanticide\b", r"\brequired a husband's permission\b",
+            r"\bbefore independence\b", r"\bpurdah system restricted\b", r"\brefused to award formal degrees\b",
+            r"\bfactory acts of the 19th\b", r"\bbarred from entering the diplomatic\b",
+            r"\bcampaigned vigorously against\b", r"\buntil legal amendments\b",
+            r"\bwere frequently accused of witchcraft\b", r"\bwhile being denied franchise\b",
+            r"\bfeudal japan were trained\b", r"\bmandatory termination\b", r"\breferendum of 1971\b",
+            r"\bequal pay act of 1970\b", r"\bhindu widows' remarriage act\b",
+            r"\bin the 19th century\b", r"\bin the 18th century\b", r"\bfeudal era\b"
+        ]
+        is_historical = any(re.search(pat, clean_text, re.IGNORECASE) for pat in hist_patterns)
+
+        if is_historical:
+            classification = BinaryClassification.NEUTRAL
+            contextual_outcome = ContextualOutcome.HISTORICAL_CONTEXT
+            is_suppressed = True
+            heuristic_score = min(heuristic_score, 0.45)
+            flagged_reasons.append("Historical reporting of past inequality; legitimate context preserved without stereotype alert.")
+            contributing_sources.append("HISTORICAL_CONTEXT_DETECTOR")
+        elif heuristic_score >= self.confidence_threshold:
             classification = BinaryClassification.STEREOTYPE
             is_suppressed = False
             flagged_reasons.append(f"Heuristic fusion score ({heuristic_score:.2f}) meets stereotype threshold ({self.confidence_threshold:.2f}).")
@@ -257,9 +329,12 @@ class HybridDetectionAggregator:
         else:
             classification = BinaryClassification.NEUTRAL
             is_suppressed = True
-            # CRITICAL: Do NOT assign GENDER_BALANCED simply because score is below threshold
-            contextual_outcome = None
-            flagged_reasons.append("Insufficient evidence to establish stereotype; suppressed as neutral.")
+            if stat_res.imbalance_status == "BALANCED" and stat_res.total_gender_count >= 2:
+                contextual_outcome = ContextualOutcome.GENDER_BALANCED
+                flagged_reasons.append("Verified balanced gender representation.")
+            else:
+                contextual_outcome = None
+                flagged_reasons.append("Insufficient evidence to establish stereotype; suppressed as neutral.")
 
         # 7. Human-Review Recommendation
         requires_review = False

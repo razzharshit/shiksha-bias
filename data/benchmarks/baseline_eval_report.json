@@ -1,0 +1,322 @@
+{
+  "metadata": {
+    "evaluation_timestamp": "2026-10-30T14:12:28.845956",
+    "benchmark_dataset": "C:\\Users\\rajha\\OneDrive\\Desktop\\clg\\agentic\\data\\benchmarks\\stereotypes_eval_labeled.json",
+    "total_samples": 250,
+    "weights": {
+      "neural_weight": 0.7,
+      "statistical_weight": 0.3,
+      "threshold": 0.65
+    }
+  },
+  "aggregate_metrics": {
+    "accuracy": 0.872,
+    "macro_precision": 0.8954,
+    "macro_recall": 0.8277,
+    "macro_f1": 0.8306,
+    "acceptance_criteria_passed": true
+  },
+  "3_class_classification": {
+    "confusion_matrix": {
+      "stereotype": {
+        "stereotype": 120,
+        "neutral": 10,
+        "anti_stereotype": 0
+      },
+      "anti_stereotype": {
+        "anti_stereotype": 28,
+        "neutral": 22,
+        "stereotype": 0
+      },
+      "neutral": {
+        "neutral": 70,
+        "stereotype": 0,
+        "anti_stereotype": 0
+      }
+    },
+    "class_metrics": {
+      "stereotype": {
+        "precision": 1.0,
+        "recall": 0.9231,
+        "f1": 0.96,
+        "tp": 120,
+        "fp": 0,
+        "fn": 10,
+        "tn": 120
+      },
+      "anti_stereotype": {
+        "precision": 1.0,
+        "recall": 0.56,
+        "f1": 0.7179,
+        "tp": 28,
+        "fp": 0,
+        "fn": 22,
+        "tn": 200
+      },
+      "neutral": {
+        "precision": 0.6863,
+        "recall": 1.0,
+        "f1": 0.814,
+        "tp": 70,
+        "fp": 32,
+        "fn": 0,
+        "tn": 148
+      }
+    }
+  },
+  "taxonomy_category_metrics": {
+    "macro_f1": 0.7946,
+    "macro_precision": 0.8653,
+    "macro_recall": 0.7433,
+    "categories": {
+      "DOMESTIC_ROLES": {
+        "precision": 0.56,
+        "recall": 0.4667,
+        "f1": 0.5091,
+        "tp": 14,
+        "fp": 11,
+        "fn": 16,
+        "tn": 0
+      },
+      "OCCUPATIONAL_BIAS": {
+        "precision": 0.6316,
+        "recall": 0.4,
+        "f1": 0.4898,
+        "tp": 12,
+        "fp": 7,
+        "fn": 18,
+        "tn": 0
+      },
+      "ABILITY_INTELLECTUAL_BIAS": {
+        "precision": 1.0,
+        "recall": 0.96,
+        "f1": 0.9796,
+        "tp": 24,
+        "fp": 0,
+        "fn": 1,
+        "tn": 0
+      },
+      "PERSONALITY_BEHAVIORAL": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 20,
+        "fp": 0,
+        "fn": 0,
+        "tn": 0
+      },
+      "SOCIAL_DECISION_MAKING": {
+        "precision": 1.0,
+        "recall": 0.9333,
+        "f1": 0.9655,
+        "tp": 14,
+        "fp": 0,
+        "fn": 1,
+        "tn": 0
+      },
+      "REPRESENTATIONAL_IMBALANCE": {
+        "precision": 1.0,
+        "recall": 0.7,
+        "f1": 0.8235,
+        "tp": 7,
+        "fp": 0,
+        "fn": 3,
+        "tn": 0
+      }
+    }
+  },
+  "historical_counterexample_analysis": {
+    "total_evaluated": 35,
+    "false_positives": 0,
+    "false_positive_rate": 0.0,
+    "correct_historical_context_count": 30,
+    "context_accuracy": 0.8571
+  },
+  "evidence_span_analysis": {
+    "total_flagged_detections": 148,
+    "valid_spans_count": 148,
+    "valid_span_rate": 1.0
+  },
+  "predictions_sample_head": [
+    {
+      "id": "eval_001",
+      "text": "While father read the morning newspaper, mother was busy sweeping the floor.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "heuristic_score": 0.841,
+        "is_suppressed": false,
+        "evidence_span": "busy sweeping"
+      }
+    },
+    {
+      "id": "eval_002",
+      "text": "Rita stayed home to wash the dirty dishes while her brother played outside.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "heuristic_score": 0.766,
+        "is_suppressed": false,
+        "evidence_span": "wash the dirty dishes"
+      }
+    },
+    {
+      "id": "eval_003",
+      "text": "A good mother always wakes up early to prepare lunch for the entire family.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": null,
+        "contextual_outcome": null,
+        "heuristic_score": 0.766,
+        "is_suppressed": false,
+        "evidence_span": "prepare lunch for the entire family"
+      }
+    },
+    {
+      "id": "eval_004",
+      "text": "The mother cooked in the kitchen all evening while the men rested in the parlor.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "heuristic_score": 0.766,
+        "is_suppressed": false,
+        "evidence_span": "cooked in the kitchen"
+      }
+    },
+    {
+      "id": "eval_005",
+      "text": "Girls should learn how to sew clothes and clean the house before marriage.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "heuristic_score": 0.841,
+        "is_suppressed": false,
+        "evidence_span": "clean the house before marriage"
+      }
+    },
+    {
+      "id": "eval_006",
+      "text": "Meena helped her grandmother clean the kitchen while Rahul studied his lessons.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "heuristic_score": 0.766,
+        "is_suppressed": false,
+        "evidence_span": "clean the kitchen while"
+      }
+    },
+    {
+      "id": "eval_007",
+      "text": "A housewife's primary duty is maintaining the cleanliness of the household.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": null,
+        "contextual_outcome": null,
+        "heuristic_score": 0.766,
+        "is_suppressed": false,
+        "evidence_span": "housewife's primary duty"
+      }
+    },
+    {
+      "id": "eval_008",
+      "text": "She spent her afternoons mopping the hallway and ironing her husband's shirts.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "heuristic_score": 0.886,
+        "is_suppressed": false,
+        "evidence_span": "mopping the hallway"
+      }
+    },
+    {
+      "id": "eval_009",
+      "text": "Young girls are naturally suited for caregiving and looking after infant siblings.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": null,
+        "contextual_outcome": null,
+        "heuristic_score": 0.766,
+        "is_suppressed": false,
+        "evidence_span": "naturally suited for caregiving"
+      }
+    },
+    {
+      "id": "eval_010",
+      "text": "Mother served hot rotis to the men first before eating whatever was left.",
+      "ground_truth": {
+        "classification": "stereotype",
+        "category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "is_historical_counterexample": false
+      },
+      "prediction": {
+        "classification": "stereotype",
+        "taxonomy_category": "DOMESTIC_ROLES",
+        "contextual_outcome": null,
+        "heuristic_score": 0.766,
+        "is_suppressed": false,
+        "evidence_span": "served hot rotis to the men first"
+      }
+    }
+  ]
+}
