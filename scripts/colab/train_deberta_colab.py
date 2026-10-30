@@ -158,15 +158,14 @@ def train(
         label2id=label2id
     )
 
-    # 4. Training Arguments - Compatible across all transformers versions
-    # Calculate warmup steps dynamically (~10% of total training steps)
+    # 4. Training Arguments - Filter dynamically against valid parameters in installed transformers
     total_training_steps = (len(train_texts) // batch_size + 1) * epochs
     warmup_steps = max(1, int(total_training_steps * 0.10))
 
     import inspect
-    sig = inspect.signature(TrainingArguments.__init__)
+    valid_params = set(inspect.signature(TrainingArguments.__init__).parameters.keys())
     
-    args_dict = {
+    raw_args = {
         "output_dir": output_dir,
         "num_train_epochs": epochs,
         "per_device_train_batch_size": batch_size,
@@ -178,20 +177,23 @@ def train(
         "load_best_model_at_end": True,
         "metric_for_best_model": "macro_f1",
         "greater_is_better": True,
-        "logging_dir": f"{output_dir}/logs",
         "logging_steps": 10,
         "save_total_limit": 2,
         "report_to": "none",
         "fp16": torch.cuda.is_available()
     }
 
-    # Version compatibility: eval_strategy vs evaluation_strategy
-    if "eval_strategy" in sig.parameters:
-        args_dict["eval_strategy"] = "epoch"
-    elif "evaluation_strategy" in sig.parameters:
-        args_dict["evaluation_strategy"] = "epoch"
+    if "eval_strategy" in valid_params:
+        raw_args["eval_strategy"] = "epoch"
+    elif "evaluation_strategy" in valid_params:
+        raw_args["evaluation_strategy"] = "epoch"
 
-    training_args = TrainingArguments(**args_dict)
+    if "logging_dir" in valid_params:
+        raw_args["logging_dir"] = f"{output_dir}/logs"
+
+    # Strict filtering: keep only arguments accepted by the installed version
+    safe_args = {k: v for k, v in raw_args.items() if k in valid_params}
+    training_args = TrainingArguments(**safe_args)
 
     trainer = Trainer(
         model=model,
