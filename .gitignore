@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Virtual environments
+venv/
+env/
+.env
+.venv/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# PyMuPDF and binary cache
+*.log
+
+# Node & Frontend
+node_modules/
+dist/
+build/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Large dataset files (stored in Google Drive / cloud storage)
+dataset/
+data/uploads/
+
+

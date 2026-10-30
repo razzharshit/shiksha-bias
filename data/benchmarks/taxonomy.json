@@ -1,0 +1,97 @@
+{
+  "version": "1.0.0",
+  "name": "SDG 5 Educational Gender Bias & Representation Taxonomy",
+  "description": "Formal taxonomy distinguishing core stereotype categories from contextual evaluation outcomes.",
+  "label_dimensions": {
+    "dimension_1_classification": {
+      "name": "Binary Gender Bias Classification",
+      "values": [
+        {
+          "code": "stereotype",
+          "description": "Reinforces traditional, restrictive, or unequal gender roles, behaviors, or expectations."
+        },
+        {
+          "code": "anti_stereotype",
+          "description": "Actively subverts, inverts, or deconstructs traditional gender stereotypes by showing diverse, non-traditional roles."
+        },
+        {
+          "code": "neutral",
+          "description": "Gender-neutral or equitable statement with no stereotypical or counter-stereotypical valence."
+        }
+      ]
+    },
+    "dimension_2_taxonomy_categories": {
+      "name": "Specific Stereotype Categories",
+      "note": "To be annotated or predicted separately from binary classification. Never automatically inferred from binary label.",
+      "categories": [
+        {
+          "category_id": "DOMESTIC_ROLES",
+          "title": "Domestic and Caregiving Roles",
+          "description": "Associates domestic labor (cleaning, cooking, laundry, sweeping) or uncompensated family care exclusively or disproportionately with women/girls.",
+          "indicators": ["cooking", "sweeping", "washing dishes", "kitchen duties", "serving dinner", "staying home to care for family"],
+          "positive_example": "While his mother was busy sweeping the floor and making dinner in the kitchen, his father returned from work.",
+          "negative_example": "The family worked together in the garden while preparing for the community harvest."
+        },
+        {
+          "category_id": "OCCUPATIONAL_BIAS",
+          "title": "Occupational Segregation",
+          "description": "Portrays high-status, technical, scientific, or leadership careers as male-only, while relegating women to ancillary or subordinate jobs.",
+          "indicators": ["male doctor/engineer/pilot vs female nurse/maid/receptionist", "subordinate female assistants"],
+          "positive_example": "The doctor gave instructions to the female nurse while the male technicians maintained the equipment.",
+          "negative_example": "Dr. Priya led the international medical research expedition across three continents."
+        },
+        {
+          "category_id": "ABILITY_INTELLECTUAL_BIAS",
+          "title": "Intellectual and Ability Bias",
+          "description": "Attributes academic, mathematical, strategic, or logical aptitudes to one gender (typically males) and emotional or non-intellectual traits to another.",
+          "indicators": ["girls finding math/science/chess too difficult", "boys being naturally better at logic and problem-solving"],
+          "positive_example": "As a girl, Leena found chess too complex for her to handle compared to her male peers.",
+          "negative_example": "Both boys and girls demonstrated equal mastery in solving complex geometric proofs."
+        },
+        {
+          "category_id": "PERSONALITY_BEHAVIORAL",
+          "title": "Personality and Behavioral Stereotypes",
+          "description": "Expects or portrays males as naturally brave, stoic, rational, and adventurous, while females are portrayed as timid, emotional, and passive.",
+          "indicators": ["boys don't cry", "girls being overly fearful", "gentle/fragile female descriptions"],
+          "positive_example": "Rohan stood brave and fearless like a real boy, while his sister cried in fear behind him.",
+          "negative_example": "The student hesitated before the stage, took a deep breath, and delivered a confident speech."
+        },
+        {
+          "category_id": "SOCIAL_DECISION_MAKING",
+          "title": "Social and Institutional Decision-Making",
+          "description": "Depicts governance, village councils, financial management, and family leadership as exclusively male domains.",
+          "indicators": ["male village elders", "fathers making all financial decisions", "exclusion of women from governance"],
+          "positive_example": "The village elders, all respected men of the community, gathered to decide the fate of the school.",
+          "negative_example": "The village council, comprising elected women and men representatives, passed the new budget."
+        },
+        {
+          "category_id": "REPRESENTATIONAL_IMBALANCE",
+          "title": "Representational and Visibility Imbalance",
+          "description": "Severe quantitative under-representation of women or girls in examples, historical biographies, or problem scenarios.",
+          "indicators": ["skewed male-to-female pronoun ratio > 4:1", "omission of female contributors to history or science"],
+          "positive_example": "The textbook chapter features 14 male scientists and inventors without mentioning any female researchers.",
+          "negative_example": "The chapter highlights pioneering discoveries by both Marie Curie and Albert Einstein."
+        }
+      ]
+    },
+    "contextual_outcomes": {
+      "name": "Contextual Classifications / Outcomes",
+      "note": "Evaluated during context investigation; NOT treated as stereotype categories.",
+      "outcomes": [
+        {
+          "outcome_id": "HISTORICAL_CONTEXT",
+          "description": "Factual reporting or discussion of past historical realities (e.g. 19th-century suffrage restrictions) without endorsing them as present norms."
+        },
+        {
+          "outcome_id": "COUNTER_NARRATIVE",
+          "description": "Explicit pedagogical context that introduces a stereotype solely to debunk, critique, or dismantle it."
+        },
+        {
+          "outcome_id": "GENDER_BALANCED",
+          "description": "Content adhering to UNESCO and NCERT gender-neutral or balanced guidelines."
+        }
+      ]
+    }
+  }
+}
+
