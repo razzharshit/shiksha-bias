@@ -1,0 +1,382 @@
+{
+  "fold_0": {
+    "fold": 0,
+    "total_samples": 145,
+    "tfidf_baseline": {
+      "metrics": {
+        "total_samples": 145,
+        "accuracy": 0.5517241379310345,
+        "macro_f1": 0.543030303030303,
+        "macro_precision": 0.5525030525030525,
+        "macro_recall": 0.5491054434716407,
+        "roc_auc": 0.5656642558051008,
+        "anti_stereotype": {
+          "precision": 0.5555555555555556,
+          "recall": 0.4225352112676056,
+          "f1": 0.48,
+          "support": 71
+        },
+        "stereotype": {
+          "precision": 0.5494505494505495,
+          "recall": 0.6756756756756757,
+          "f1": 0.6060606060606061,
+          "support": 74
+        },
+        "confusion_matrix": {
+          "tn": 30,
+          "fp": 41,
+          "fn": 24,
+          "tp": 50,
+          "matrix": [
+            [
+              30,
+              41
+            ],
+            [
+              24,
+              50
+            ]
+          ]
+        },
+        "best_c": 10.0,
+        "val_macro_f1": 0.5643243243243243
+      },
+      "confusion_matrix": {
+        "tn": 30,
+        "fp": 41,
+        "fn": 24,
+        "tp": 50,
+        "matrix": [
+          [
+            30,
+            41
+          ],
+          [
+            24,
+            50
+          ]
+        ]
+      },
+      "fp_count": 41,
+      "fn_count": 24,
+      "fp_sample_ids": [
+        "indicasa_56",
+        "indicasa_62",
+        "indicasa_204",
+        "indicasa_205",
+        "indicasa_206"
+      ],
+      "fn_sample_ids": [
+        "indicasa_32",
+        "indicasa_33",
+        "indicasa_34",
+        "indicasa_35",
+        "indicasa_36"
+      ]
+    }
+  },
+  "fold_1": {
+    "fold": 1,
+    "total_samples": 217,
+    "tfidf_baseline": {
+      "metrics": {
+        "total_samples": 217,
+        "accuracy": 0.6221198156682027,
+        "macro_f1": 0.6161777394305435,
+        "macro_precision": 0.6164646637077501,
+        "macro_recall": 0.619777036516854,
+        "roc_auc": 0.6316274578651686,
+        "anti_stereotype": {
+          "precision": 0.5346534653465347,
+          "recall": 0.6067415730337079,
+          "f1": 0.5684210526315789,
+          "support": 89
+        },
+        "stereotype": {
+          "precision": 0.6982758620689655,
+          "recall": 0.6328125,
+          "f1": 0.6639344262295082,
+          "support": 128
+        },
+        "confusion_matrix": {
+          "tn": 54,
+          "fp": 35,
+          "fn": 47,
+          "tp": 81,
+          "matrix": [
+            [
+              54,
+              35
+            ],
+            [
+              47,
+              81
+            ]
+          ]
+        },
+        "best_c": 5.0,
+        "val_macro_f1": 0.6262079473916355
+      },
+      "confusion_matrix": {
+        "tn": 54,
+        "fp": 35,
+        "fn": 47,
+        "tp": 81,
+        "matrix": [
+          [
+            54,
+            35
+          ],
+          [
+            47,
+            81
+          ]
+        ]
+      },
+      "fp_count": 35,
+      "fn_count": 47,
+      "fp_sample_ids": [
+        "indicasa_20",
+        "indicasa_23",
+        "indicasa_26",
+        "indicasa_31",
+        "indicasa_298"
+      ],
+      "fn_sample_ids": [
+        "indicasa_1",
+        "indicasa_5",
+        "indicasa_11",
+        "indicasa_14",
+        "indicasa_161"
+      ]
+    }
+  },
+  "fold_2": {
+    "fold": 2,
+    "total_samples": 158,
+    "tfidf_baseline": {
+      "metrics": {
+        "total_samples": 158,
+        "accuracy": 0.5379746835443038,
+        "macro_f1": 0.535724348911162,
+        "macro_precision": 0.5483870967741935,
+        "macro_recall": 0.5464141821112006,
+        "roc_auc": 0.6170829975825947,
+        "anti_stereotype": {
+          "precision": 0.5967741935483871,
+          "recall": 0.43529411764705883,
+          "f1": 0.5034013605442177,
+          "support": 85
+        },
+        "stereotype": {
+          "precision": 0.5,
+          "recall": 0.6575342465753424,
+          "f1": 0.5680473372781065,
+          "support": 73
+        },
+        "confusion_matrix": {
+          "tn": 37,
+          "fp": 48,
+          "fn": 25,
+          "tp": 48,
+          "matrix": [
+            [
+              37,
+              48
+            ],
+            [
+              25,
+              48
+            ]
+          ]
+        },
+        "best_c": 10.0,
+        "val_macro_f1": 0.4910352805089647
+      },
+      "confusion_matrix": {
+        "tn": 37,
+        "fp": 48,
+        "fn": 25,
+        "tp": 48,
+        "matrix": [
+          [
+            37,
+            48
+          ],
+          [
+            25,
+            48
+          ]
+        ]
+      },
+      "fp_count": 48,
+      "fn_count": 25,
+      "fp_sample_ids": [
+        "indicasa_144",
+        "indicasa_147",
+        "indicasa_148",
+        "indicasa_150",
+        "indicasa_151"
+      ],
+      "fn_sample_ids": [
+        "indicasa_137",
+        "indicasa_140",
+        "indicasa_142",
+        "indicasa_371",
+        "indicasa_372"
+      ]
+    }
+  },
+  "fold_3": {
+    "fold": 3,
+    "total_samples": 176,
+    "tfidf_baseline": {
+      "metrics": {
+        "total_samples": 176,
+        "accuracy": 0.5568181818181818,
+        "macro_f1": 0.4940291906236179,
+        "macro_precision": 0.5053435114503817,
+        "macro_recall": 0.5042665583096302,
+        "roc_auc": 0.5686712718407152,
+        "anti_stereotype": {
+          "precision": 0.4,
+          "recall": 0.2608695652173913,
+          "f1": 0.3157894736842105,
+          "support": 69
+        },
+        "stereotype": {
+          "precision": 0.6106870229007634,
+          "recall": 0.7476635514018691,
+          "f1": 0.6722689075630253,
+          "support": 107
+        },
+        "confusion_matrix": {
+          "tn": 18,
+          "fp": 51,
+          "fn": 27,
+          "tp": 80,
+          "matrix": [
+            [
+              18,
+              51
+            ],
+            [
+              27,
+              80
+            ]
+          ]
+        },
+        "best_c": 1.0,
+        "val_macro_f1": 0.4717500546209307
+      },
+      "confusion_matrix": {
+        "tn": 18,
+        "fp": 51,
+        "fn": 27,
+        "tp": 80,
+        "matrix": [
+          [
+            18,
+            51
+          ],
+          [
+            27,
+            80
+          ]
+        ]
+      },
+      "fp_count": 51,
+      "fn_count": 27,
+      "fp_sample_ids": [
+        "indicasa_108",
+        "indicasa_109",
+        "indicasa_110",
+        "indicasa_111",
+        "indicasa_112"
+      ],
+      "fn_sample_ids": [
+        "indicasa_342",
+        "indicasa_343",
+        "indicasa_344",
+        "indicasa_345",
+        "indicasa_346"
+      ]
+    }
+  },
+  "fold_4": {
+    "fold": 4,
+    "total_samples": 157,
+    "tfidf_baseline": {
+      "metrics": {
+        "total_samples": 157,
+        "accuracy": 0.445859872611465,
+        "macro_f1": 0.4185927723151577,
+        "macro_precision": 0.42988640814727774,
+        "macro_recall": 0.4418831168831169,
+        "roc_auc": 0.46972402597402596,
+        "anti_stereotype": {
+          "precision": 0.391304347826087,
+          "recall": 0.23376623376623376,
+          "f1": 0.2926829268292683,
+          "support": 77
+        },
+        "stereotype": {
+          "precision": 0.46846846846846846,
+          "recall": 0.65,
+          "f1": 0.5445026178010471,
+          "support": 80
+        },
+        "confusion_matrix": {
+          "tn": 18,
+          "fp": 59,
+          "fn": 28,
+          "tp": 52,
+          "matrix": [
+            [
+              18,
+              59
+            ],
+            [
+              28,
+              52
+            ]
+          ]
+        },
+        "best_c": 10.0,
+        "val_macro_f1": 0.49837199837199836
+      },
+      "confusion_matrix": {
+        "tn": 18,
+        "fp": 59,
+        "fn": 28,
+        "tp": 52,
+        "matrix": [
+          [
+            18,
+            59
+          ],
+          [
+            28,
+            52
+          ]
+        ]
+      },
+      "fp_count": 59,
+      "fn_count": 28,
+      "fp_sample_ids": [
+        "indicasa_79",
+        "indicasa_83",
+        "indicasa_86",
+        "indicasa_226",
+        "indicasa_227"
+      ],
+      "fn_sample_ids": [
+        "indicasa_67",
+        "indicasa_68",
+        "indicasa_70",
+        "indicasa_72",
+        "indicasa_210"
+      ]
+    }
+  }
+}
