@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import inspect
 import argparse
 from pathlib import Path
 from typing import Dict, Any, Tuple
@@ -33,27 +34,67 @@ class StereotypeDataset(Dataset):
         return len(self.labels)
 
 
+class DiagnosticTrainer(Trainer):
+    """
+    Subclass of Trainer that strictly validates finite loss at every training step.
+    Fails immediately upon non-finite loss to prevent silent weight corruption.
+    """
+    def training_step(self, model, inputs, num_items_in_batch=None):
+        if num_items_in_batch is not None:
+            loss = super().training_step(model, inputs, num_items_in_batch=num_items_in_batch)
+        else:
+            loss = super().training_step(model, inputs)
+
+        if not torch.isfinite(loss):
+            raise FloatingPointError(
+                f"[CRITICAL ERROR] Non-finite loss ({loss.item()}) detected during training step! "
+                "Halting immediately to prevent weight divergence."
+            )
+        return loss
+
+
 def compute_metrics(eval_pred):
     """Calculates evaluation metrics: Accuracy, Precision, Recall, Macro F1, and AUC."""
     logits, labels = eval_pred
     if isinstance(logits, tuple):
         logits = logits[0]
 
+    # Explicit finite-value assertion
+    if not np.isfinite(logits).all():
+        raise FloatingPointError(
+            "[CRITICAL ERROR] Non-finite values (NaN/Inf) encountered in model evaluation logits! "
+            "Model weights have diverged."
+        )
+
     preds = np.argmax(logits, axis=1)
-    
-    # Calculate softmax probabilities for AUC
+
+    # Class prediction distribution diagnostics
+    pred_0 = int(np.sum(preds == 0))
+    pred_1 = int(np.sum(preds == 1))
+    true_0 = int(np.sum(labels == 0))
+    true_1 = int(np.sum(labels == 1))
+
+    print(f"\n  [Diagnostics] Evaluation Predictions : Anti-Stereotype (0): {pred_0}, Stereotype (1): {pred_1}")
+    print(f"  [Diagnostics] Ground Truth Reference: Anti-Stereotype (0): {true_0}, Stereotype (1): {true_1}")
+
+    # Numerically stable softmax computation
     exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
     probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-    pos_probs = probs[:, 1]
+    pos_probs = probs[:, 1]  # Class 1 = "stereotype"
 
     precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='macro', zero_division=0)
     bin_precision, bin_recall, bin_f1, _ = precision_recall_fscore_support(labels, preds, average='binary', zero_division=0)
     acc = accuracy_score(labels, preds)
-    
+
+    # Calculate ROC-AUC using positive-class probability
     try:
-        auc = roc_auc_score(labels, pos_probs)
-    except Exception:
-        auc = 0.5
+        if len(np.unique(labels)) > 1:
+            auc = float(roc_auc_score(labels, pos_probs))
+        else:
+            auc = float('nan')
+    except Exception as e:
+        print(f"  [Diagnostics] Could not calculate ROC-AUC: {e}")
+        auc = float('nan')
 
     return {
         'accuracy': float(acc),
@@ -77,7 +118,7 @@ def load_benchmark_data(benchmark_path: str, use_fold: int = -1):
         data = json.load(f)
 
     records = data['records']
-    
+
     train_texts, train_labels = [], []
     val_texts, val_labels = [], []
     test_texts, test_labels = [], []
@@ -119,22 +160,34 @@ def train(
     output_dir: str = "./models/deberta-v3-stereotype",
     model_name: str = "microsoft/deberta-v3-base",
     epochs: int = 5,
-    batch_size: int = 16,
-    learning_rate: float = 2e-5,
+    batch_size: int = 8,
+    grad_accum: int = 2,
+    learning_rate: float = 5e-6,
+    weight_decay: float = 0.01,
+    max_grad_norm: float = 1.0,
+    adam_epsilon: float = 1e-6,
+    warmup_ratio: float = 0.1,
     max_length: int = 256,
-    use_fold: int = -1,
+    use_fold: int = 0,
+    patience: int = 5,
     fp16: bool = False
 ):
     print("=" * 70)
-    print("DEBERTA-V3 GENDER STEREOTYPE FINE-TUNING PIPELINE")
+    print("DEBERTA-V3 CONSERVATIVE FINE-TUNING PIPELINE (NUMERICALLY STABILIZED)")
     print("=" * 70)
-    print(f"Base Model    : {model_name}")
-    print(f"Max Seq Length: {max_length}")
-    print(f"Batch Size    : {batch_size}")
-    print(f"Learning Rate : {learning_rate}")
-    print(f"Epochs        : {epochs}")
-    print(f"FP16 Precision: {fp16} (FP32 recommended for DeBERTa-v3 numerical stability)")
-    print(f"Strategy      : {'70/15/15 Group Split' if use_fold < 0 else f'GroupKFold (Fold {use_fold})'}")
+    print(f"Base Model              : {model_name}")
+    print(f"Max Sequence Length     : {max_length}")
+    print(f"Per-Device Batch Size   : {batch_size}")
+    print(f"Gradient Accumulation   : {grad_accum} (Effective Batch Size: {batch_size * grad_accum})")
+    print(f"Learning Rate           : {learning_rate}")
+    print(f"Weight Decay            : {weight_decay}")
+    print(f"Max Gradient Norm       : {max_grad_norm}")
+    print(f"Adam Epsilon            : {adam_epsilon}")
+    print(f"Warmup Ratio            : {warmup_ratio}")
+    print(f"Epochs                  : {epochs}")
+    print(f"Early Stopping Patience : {patience if patience > 0 else 'Disabled'}")
+    print(f"Precision Mode          : {'FP16' if fp16 else 'FP32 (Recommended for DeBERTa-v3)'}")
+    print(f"Validation Strategy     : {'70/15/15 Group Split' if use_fold < 0 else f'GroupKFold (Fold {use_fold})'}")
     print("=" * 70)
 
     # 1. Load Data
@@ -163,21 +216,25 @@ def train(
         label2id=label2id
     )
 
-    # 4. Training Arguments - Filter dynamically against valid parameters in installed transformers
-    total_training_steps = (len(train_texts) // batch_size + 1) * epochs
-    warmup_steps = max(1, int(total_training_steps * 0.10))
+    # 4. Training Arguments - Safe filtering for transformers version compatibility
+    effective_batch_size = batch_size * grad_accum
+    total_training_steps = (len(train_texts) // effective_batch_size + 1) * epochs
+    warmup_steps = max(1, int(total_training_steps * warmup_ratio))
 
     import inspect
     valid_params = set(inspect.signature(TrainingArguments.__init__).parameters.keys())
-    
+
     raw_args = {
         "output_dir": output_dir,
         "num_train_epochs": epochs,
         "per_device_train_batch_size": batch_size,
         "per_device_eval_batch_size": batch_size,
+        "gradient_accumulation_steps": grad_accum,
         "warmup_steps": warmup_steps,
-        "weight_decay": 0.01,
+        "weight_decay": weight_decay,
         "learning_rate": learning_rate,
+        "max_grad_norm": max_grad_norm,
+        "adam_epsilon": adam_epsilon,
         "save_strategy": "epoch",
         "load_best_model_at_end": True,
         "metric_for_best_model": "macro_f1",
@@ -196,18 +253,21 @@ def train(
     if "logging_dir" in valid_params:
         raw_args["logging_dir"] = f"{output_dir}/logs"
 
-    # Strict filtering: keep only arguments accepted by the installed version
     safe_args = {k: v for k, v in raw_args.items() if k in valid_params}
     training_args = TrainingArguments(**safe_args)
 
-    trainer = Trainer(
+    callbacks = []
+    if patience > 0:
+        callbacks.append(EarlyStoppingCallback(early_stopping_patience=patience))
+
+    trainer = DiagnosticTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         data_collator=DataCollatorWithPadding(tokenizer=tokenizer),
         compute_metrics=compute_metrics,
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=2)]
+        callbacks=callbacks
     )
 
     # 5. Train
@@ -242,9 +302,15 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", type=str, default="data/benchmarks/indicasa_split_benchmark.json")
     parser.add_argument("--output_dir", type=str, default="./models/deberta-v3-stereotype")
     parser.add_argument("--epochs", type=int, default=5)
-    parser.add_argument("--batch_size", type=int, default=16)
-    parser.add_argument("--lr", type=float, default=2e-5)
-    parser.add_argument("--use_fold", type=int, default=-1, help="-1 for 70/15/15 split, 0..4 for GroupKFold")
+    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--grad_accum", type=int, default=2)
+    parser.add_argument("--lr", type=float, default=5e-6)
+    parser.add_argument("--weight_decay", type=float, default=0.01)
+    parser.add_argument("--max_grad_norm", type=float, default=1.0)
+    parser.add_argument("--adam_epsilon", type=float, default=1e-6)
+    parser.add_argument("--warmup_ratio", type=float, default=0.1)
+    parser.add_argument("--use_fold", type=int, default=0, help="-1 for 70/15/15 split, 0..4 for GroupKFold")
+    parser.add_argument("--patience", type=int, default=5, help="Early stopping patience (set >= epochs to allow all epochs)")
     parser.add_argument("--fp16", action="store_true", default=False, help="Enable FP16 (default False, FP32 recommended for DeBERTa-v3 stability)")
 
     args = parser.parse_args()
@@ -253,8 +319,13 @@ if __name__ == "__main__":
         output_dir=args.output_dir,
         epochs=args.epochs,
         batch_size=args.batch_size,
+        grad_accum=args.grad_accum,
         learning_rate=args.lr,
+        weight_decay=args.weight_decay,
+        max_grad_norm=args.max_grad_norm,
+        adam_epsilon=args.adam_epsilon,
+        warmup_ratio=args.warmup_ratio,
         use_fold=args.use_fold,
+        patience=args.patience,
         fp16=args.fp16
     )
-
