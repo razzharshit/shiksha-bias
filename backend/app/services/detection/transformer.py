@@ -142,3 +142,4 @@ class TransformerClassifier:
             surrounding_context=context or text,
             tokens=text.split()
         )
+
