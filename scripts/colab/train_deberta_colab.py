@@ -36,6 +36,9 @@ class StereotypeDataset(Dataset):
 def compute_metrics(eval_pred):
     """Calculates evaluation metrics: Accuracy, Precision, Recall, Macro F1, and AUC."""
     logits, labels = eval_pred
+    if isinstance(logits, tuple):
+        logits = logits[0]
+
     preds = np.argmax(logits, axis=1)
     
     # Calculate softmax probabilities for AUC
@@ -119,7 +122,8 @@ def train(
     batch_size: int = 16,
     learning_rate: float = 2e-5,
     max_length: int = 256,
-    use_fold: int = -1
+    use_fold: int = -1,
+    fp16: bool = False
 ):
     print("=" * 70)
     print("DEBERTA-V3 GENDER STEREOTYPE FINE-TUNING PIPELINE")
@@ -129,6 +133,7 @@ def train(
     print(f"Batch Size    : {batch_size}")
     print(f"Learning Rate : {learning_rate}")
     print(f"Epochs        : {epochs}")
+    print(f"FP16 Precision: {fp16} (FP32 recommended for DeBERTa-v3 numerical stability)")
     print(f"Strategy      : {'70/15/15 Group Split' if use_fold < 0 else f'GroupKFold (Fold {use_fold})'}")
     print("=" * 70)
 
@@ -180,7 +185,7 @@ def train(
         "logging_steps": 10,
         "save_total_limit": 2,
         "report_to": "none",
-        "fp16": torch.cuda.is_available()
+        "fp16": fp16
     }
 
     if "eval_strategy" in valid_params:
@@ -221,7 +226,7 @@ def train(
 
     # 7. Save Model & Tokenizer
     model_save_path = f"{output_dir}/best_model"
-    model.save_pretrained(model_save_path)
+    trainer.save_model(model_save_path)
     tokenizer.save_pretrained(model_save_path)
     print(f"\n[+] Fine-tuned model saved to: {model_save_path}")
 
@@ -240,6 +245,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--use_fold", type=int, default=-1, help="-1 for 70/15/15 split, 0..4 for GroupKFold")
+    parser.add_argument("--fp16", action="store_true", default=False, help="Enable FP16 (default False, FP32 recommended for DeBERTa-v3 stability)")
 
     args = parser.parse_args()
     train(
@@ -248,6 +254,7 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         learning_rate=args.lr,
-        use_fold=args.use_fold
+        use_fold=args.use_fold,
+        fp16=args.fp16
     )
 
