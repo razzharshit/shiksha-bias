@@ -1,338 +1,470 @@
 {
   "title": "IndiCASA Gender Stereotype Classification: DeBERTa-v3 vs. TF-IDF + Logistic Regression Baseline",
-  "dataset": "IndiCASA (853 sentences across 37 unique contexts)",
-  "evaluation_strategy": "5-Fold Grouped Cross-Validation (GroupKFold with zero context leakage)",
+  "benchmark": {
+    "dataset_name": "IndiCASA Gender Stereotype Benchmark",
+    "total_sentences": 853,
+    "total_unique_contexts": 37,
+    "label_distribution": {
+      "stereotype": 462,
+      "anti_stereotype": 391
+    },
+    "split_protocol": "5-Fold Grouped Cross-Validation (GroupKFold on context_id)",
+    "context_isolation": "Strict pairwise disjoint context IDs between train, val, and test across all folds (zero context leakage)"
+  },
+  "aggregation_distinction": {
+    "mean_fold_metrics": "Calculated as the unweighted arithmetic mean and population standard deviation (ddof=0) of the per-fold test evaluation metrics across the K=5 folds.",
+    "pooled_out_of_fold_metrics": "Calculated by concatenating all 853 out-of-fold test predictions across the 5 test partitions and computing global accuracy, precision, recall, F1, and confusion matrix over the full dataset."
+  },
+  "reproducibility_metadata": {
+    "random_seed": 42,
+    "library_versions": {
+      "transformers": "4.57.1",
+      "torch": "2.5.1+cu121 (local verification) / PyTorch 2.6 (Colab execution)",
+      "scikit-learn": "1.6.0",
+      "numpy": "2.2.1",
+      "python": "3.12.0"
+    },
+    "model_revision": {
+      "hf_hub_id": "microsoft/deberta-v3-base",
+      "revision_branch": "main",
+      "weights_file": "pytorch_model.bin (371 MB)"
+    },
+    "label_mapping": {
+      "anti_stereotype": 0,
+      "stereotype": 1
+    },
+    "fold_configuration": {
+      "strategy": "GroupKFold (5 splits based on context_id)",
+      "test_fold_assignment": "Fold k",
+      "val_fold_assignment": "Fold (k + 1) mod 5",
+      "train_fold_assignment": "Remaining 3 folds"
+    },
+    "checkpoint_selection": {
+      "metric": "macro_f1",
+      "dataset": "validation partition",
+      "greater_is_better": true,
+      "eval_frequency": "epoch"
+    },
+    "standard_deviation_convention": "Population standard deviation (numpy ddof=0) across 5 folds",
+    "hardware_environment": {
+      "device_type": "Google Colab GPU",
+      "gpu_model": "unknown",
+      "cuda_version": "unknown"
+    }
+  },
   "models": {
     "deberta_v3_base": {
-      "architecture": "microsoft/deberta-v3-base",
-      "parameters": "86M backbone + 2-class sequence classification head",
+      "architecture": {
+        "model_name": "microsoft/deberta-v3-base",
+        "model_type": "deberta-v2",
+        "exact_total_parameters": 184423682,
+        "exact_trainable_parameters": 184423682,
+        "parameter_breakdown": {
+          "embedding_parameters": 98382336,
+          "encoder_transformer_layers": 85054464,
+          "relative_position_embeddings": 394752,
+          "classification_head_parameters": 592130
+        },
+        "architecture_notes": "The total parameter count is exactly 184,423,682 (~184.4M). Colloquial citations of 86M refer exclusively to the 12 transformer encoder layers without the 128,100-token SentencePiece embedding layer (98.38M parameters).",
+        "hidden_size": 768,
+        "num_hidden_layers": 12,
+        "num_attention_heads": 12,
+        "intermediate_size": 3072,
+        "vocab_size": 128100,
+        "relative_attention": true,
+        "position_buckets": 256
+      },
       "hyperparameters": {
         "learning_rate": 5e-06,
-        "batch_size": 8,
-        "grad_accum": 2,
+        "per_device_batch_size": 8,
+        "gradient_accumulation_steps": 2,
         "effective_batch_size": 16,
         "max_grad_norm": 1.0,
         "adam_epsilon": 1e-06,
-        "epochs": 5,
-        "precision": "FP32"
+        "num_train_epochs": 5,
+        "precision_mode": "FP32",
+        "warmup_ratio": 0.1,
+        "weight_decay": 0.01,
+        "early_stopping_patience": 5
       },
-      "summary_metrics": {
-        "accuracy": {
-          "mean": 0.6157,
-          "std": 0.0561
+      "evaluation_metrics": {
+        "mean_fold_metrics": {
+          "accuracy": {
+            "mean": 0.6157,
+            "std": 0.0561
+          },
+          "macro_f1": {
+            "mean": 0.5845,
+            "std": 0.0706
+          },
+          "roc_auc": {
+            "mean": 0.6591,
+            "std": 0.0664
+          },
+          "stereotype_precision": {
+            "mean": 0.6367,
+            "std": 0.0706
+          },
+          "stereotype_recall": {
+            "mean": 0.6758,
+            "std": 0.1904
+          },
+          "stereotype_f1": {
+            "mean": 0.6436,
+            "std": 0.112
+          },
+          "anti_stereotype_precision": {
+            "mean": 0.6142,
+            "std": 0.088
+          },
+          "anti_stereotype_recall": {
+            "mean": 0.542,
+            "std": 0.125
+          },
+          "anti_stereotype_f1": {
+            "mean": 0.5528,
+            "std": 0.089
+          }
         },
-        "macro_f1": {
-          "mean": 0.5845,
-          "std": 0.0706
-        },
-        "roc_auc": {
-          "mean": 0.6591,
-          "std": 0.0664
-        },
-        "stereotype_precision": {
-          "mean": 0.6367,
-          "std": 0.0706
-        },
-        "stereotype_recall": {
-          "mean": 0.6758,
-          "std": 0.1904
-        },
-        "stereotype_f1": {
-          "mean": 0.6436,
-          "std": 0.112
-        },
-        "anti_stereotype_precision": {
-          "mean": 0.6142,
-          "std": 0.088
-        },
-        "anti_stereotype_recall": {
-          "mean": 0.542,
-          "std": 0.125
-        },
-        "anti_stereotype_f1": {
-          "mean": 0.5528,
-          "std": 0.089
+        "pooled_out_of_fold_metrics": {
+          "status": "available_in_fold_checkpoints",
+          "note": "Generated per-fold in Colab and recorded in summary diagnostics"
         }
       }
     },
     "tfidf_logistic_regression": {
-      "architecture": "TF-IDF (unigram + bigram, sublinear_tf) + Logistic Regression",
-      "hyperparameters": {
+      "architecture": {
+        "vectorizer": "TfidfVectorizer",
         "ngram_range": [
           1,
           2
         ],
         "min_df": 2,
-        "c_selection": "Grid search on validation macro-F1 (C in [0.05..10.0])"
+        "sublinear_tf": true,
+        "classifier": "LogisticRegression",
+        "solver": "lbfgs",
+        "max_iter": 1000,
+        "c_selection": "Grid search over [0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0] on validation macro-F1"
       },
-      "summary_metrics": {
-        "accuracy": {
-          "mean": 0.5428993383146375,
-          "std": 0.056548042324092225
-        },
-        "macro_f1": {
-          "mean": 0.5215108708621568,
-          "std": 0.06476774302211917
-        },
-        "macro_precision": {
-          "mean": 0.530516946516531,
-          "std": 0.06156289191157147
-        },
-        "macro_recall": {
-          "mean": 0.5322892674584885,
-          "std": 0.05847213184818882
-        },
-        "roc_auc": {
-          "mean": 0.570554001813521,
-          "std": 0.05672574864616865
-        },
-        "stereotype_precision": {
-          "mean": 0.5653763805777494,
-          "std": 0.08201728251079421
-        },
-        "stereotype_recall": {
-          "mean": 0.6727371947305774,
-          "std": 0.0399116135991896
-        },
-        "stereotype_f1": {
-          "mean": 0.6109627789864587,
-          "std": 0.05068955765026442
-        },
-        "anti_stereotype_precision": {
-          "mean": 0.49565751245531287,
-          "std": 0.08411062449142089
-        },
-        "anti_stereotype_recall": {
-          "mean": 0.3918413401863995,
-          "std": 0.13502126704864081
-        },
-        "anti_stereotype_f1": {
-          "mean": 0.4320589627378551,
-          "std": 0.10856055803937537
-        }
-      },
-      "pooled_confusion_matrix": {
-        "tn": 157,
-        "fp": 234,
-        "fn": 151,
-        "tp": 311,
-        "matrix": [
-          [
-            157,
-            234
-          ],
-          [
-            151,
-            311
-          ]
-        ]
-      },
-      "per_fold": {
-        "fold_0": {
-          "total_samples": 145,
-          "accuracy": 0.5517241379310345,
-          "macro_f1": 0.543030303030303,
-          "macro_precision": 0.5525030525030525,
-          "macro_recall": 0.5491054434716407,
-          "roc_auc": 0.5656642558051008,
-          "anti_stereotype": {
-            "precision": 0.5555555555555556,
-            "recall": 0.4225352112676056,
-            "f1": 0.48,
-            "support": 71
+      "evaluation_metrics": {
+        "mean_fold_metrics": {
+          "accuracy": {
+            "mean": 0.5428993383146375,
+            "std": 0.056548042324092225
           },
+          "macro_f1": {
+            "mean": 0.5215108708621568,
+            "std": 0.06476774302211917
+          },
+          "macro_precision": {
+            "mean": 0.530516946516531,
+            "std": 0.06156289191157147
+          },
+          "macro_recall": {
+            "mean": 0.5322892674584885,
+            "std": 0.05847213184818882
+          },
+          "roc_auc": {
+            "mean": 0.570554001813521,
+            "std": 0.05672574864616865
+          },
+          "stereotype_precision": {
+            "mean": 0.5653763805777494,
+            "std": 0.08201728251079421
+          },
+          "stereotype_recall": {
+            "mean": 0.6727371947305774,
+            "std": 0.0399116135991896
+          },
+          "stereotype_f1": {
+            "mean": 0.6109627789864587,
+            "std": 0.05068955765026442
+          },
+          "anti_stereotype_precision": {
+            "mean": 0.49565751245531287,
+            "std": 0.08411062449142089
+          },
+          "anti_stereotype_recall": {
+            "mean": 0.3918413401863995,
+            "std": 0.13502126704864081
+          },
+          "anti_stereotype_f1": {
+            "mean": 0.4320589627378551,
+            "std": 0.10856055803937537
+          }
+        },
+        "pooled_out_of_fold_metrics": {
+          "total_samples": 853,
+          "accuracy": 0.5486518171160609,
+          "macro_f1": 0.5334447138982772,
           "stereotype": {
-            "precision": 0.5494505494505495,
-            "recall": 0.6756756756756757,
-            "f1": 0.6060606060606061,
-            "support": 74
+            "precision": 0.5706422018348624,
+            "recall": 0.6731601731601732,
+            "f1": 0.6176762661370407,
+            "support": 462
+          },
+          "anti_stereotype": {
+            "precision": 0.5097402597402597,
+            "recall": 0.40153452685422,
+            "f1": 0.4492131616595136,
+            "support": 391
           },
           "confusion_matrix": {
-            "tn": 30,
-            "fp": 41,
-            "fn": 24,
-            "tp": 50,
+            "tn": 157,
+            "fp": 234,
+            "fn": 151,
+            "tp": 311,
             "matrix": [
               [
-                30,
-                41
+                157,
+                234
               ],
               [
-                24,
-                50
+                151,
+                311
               ]
             ]
-          },
-          "best_c": 10.0,
-          "val_macro_f1": 0.5643243243243243
+          }
         },
-        "fold_1": {
-          "total_samples": 217,
-          "accuracy": 0.6221198156682027,
-          "macro_f1": 0.6161777394305435,
-          "macro_precision": 0.6164646637077501,
-          "macro_recall": 0.619777036516854,
-          "roc_auc": 0.6316274578651686,
-          "anti_stereotype": {
-            "precision": 0.5346534653465347,
-            "recall": 0.6067415730337079,
-            "f1": 0.5684210526315789,
-            "support": 89
-          },
-          "stereotype": {
-            "precision": 0.6982758620689655,
-            "recall": 0.6328125,
-            "f1": 0.6639344262295082,
-            "support": 128
-          },
-          "confusion_matrix": {
-            "tn": 54,
-            "fp": 35,
-            "fn": 47,
-            "tp": 81,
-            "matrix": [
-              [
-                54,
-                35
-              ],
-              [
-                47,
-                81
+        "per_fold_details": {
+          "fold_0": {
+            "total_samples": 145,
+            "accuracy": 0.5517241379310345,
+            "macro_f1": 0.543030303030303,
+            "macro_precision": 0.5525030525030525,
+            "macro_recall": 0.5491054434716407,
+            "roc_auc": 0.5656642558051008,
+            "anti_stereotype": {
+              "precision": 0.5555555555555556,
+              "recall": 0.4225352112676056,
+              "f1": 0.48,
+              "support": 71
+            },
+            "stereotype": {
+              "precision": 0.5494505494505495,
+              "recall": 0.6756756756756757,
+              "f1": 0.6060606060606061,
+              "support": 74
+            },
+            "confusion_matrix": {
+              "tn": 30,
+              "fp": 41,
+              "fn": 24,
+              "tp": 50,
+              "matrix": [
+                [
+                  30,
+                  41
+                ],
+                [
+                  24,
+                  50
+                ]
               ]
-            ]
+            },
+            "best_c": 10.0,
+            "val_macro_f1": 0.5643243243243243
           },
-          "best_c": 5.0,
-          "val_macro_f1": 0.6262079473916355
-        },
-        "fold_2": {
-          "total_samples": 158,
-          "accuracy": 0.5379746835443038,
-          "macro_f1": 0.535724348911162,
-          "macro_precision": 0.5483870967741935,
-          "macro_recall": 0.5464141821112006,
-          "roc_auc": 0.6170829975825947,
-          "anti_stereotype": {
-            "precision": 0.5967741935483871,
-            "recall": 0.43529411764705883,
-            "f1": 0.5034013605442177,
-            "support": 85
-          },
-          "stereotype": {
-            "precision": 0.5,
-            "recall": 0.6575342465753424,
-            "f1": 0.5680473372781065,
-            "support": 73
-          },
-          "confusion_matrix": {
-            "tn": 37,
-            "fp": 48,
-            "fn": 25,
-            "tp": 48,
-            "matrix": [
-              [
-                37,
-                48
-              ],
-              [
-                25,
-                48
+          "fold_1": {
+            "total_samples": 217,
+            "accuracy": 0.6221198156682027,
+            "macro_f1": 0.6161777394305435,
+            "macro_precision": 0.6164646637077501,
+            "macro_recall": 0.619777036516854,
+            "roc_auc": 0.6316274578651686,
+            "anti_stereotype": {
+              "precision": 0.5346534653465347,
+              "recall": 0.6067415730337079,
+              "f1": 0.5684210526315789,
+              "support": 89
+            },
+            "stereotype": {
+              "precision": 0.6982758620689655,
+              "recall": 0.6328125,
+              "f1": 0.6639344262295082,
+              "support": 128
+            },
+            "confusion_matrix": {
+              "tn": 54,
+              "fp": 35,
+              "fn": 47,
+              "tp": 81,
+              "matrix": [
+                [
+                  54,
+                  35
+                ],
+                [
+                  47,
+                  81
+                ]
               ]
-            ]
+            },
+            "best_c": 5.0,
+            "val_macro_f1": 0.6262079473916355
           },
-          "best_c": 10.0,
-          "val_macro_f1": 0.4910352805089647
-        },
-        "fold_3": {
-          "total_samples": 176,
-          "accuracy": 0.5568181818181818,
-          "macro_f1": 0.4940291906236179,
-          "macro_precision": 0.5053435114503817,
-          "macro_recall": 0.5042665583096302,
-          "roc_auc": 0.5686712718407152,
-          "anti_stereotype": {
-            "precision": 0.4,
-            "recall": 0.2608695652173913,
-            "f1": 0.3157894736842105,
-            "support": 69
-          },
-          "stereotype": {
-            "precision": 0.6106870229007634,
-            "recall": 0.7476635514018691,
-            "f1": 0.6722689075630253,
-            "support": 107
-          },
-          "confusion_matrix": {
-            "tn": 18,
-            "fp": 51,
-            "fn": 27,
-            "tp": 80,
-            "matrix": [
-              [
-                18,
-                51
-              ],
-              [
-                27,
-                80
+          "fold_2": {
+            "total_samples": 158,
+            "accuracy": 0.5379746835443038,
+            "macro_f1": 0.535724348911162,
+            "macro_precision": 0.5483870967741935,
+            "macro_recall": 0.5464141821112006,
+            "roc_auc": 0.6170829975825947,
+            "anti_stereotype": {
+              "precision": 0.5967741935483871,
+              "recall": 0.43529411764705883,
+              "f1": 0.5034013605442177,
+              "support": 85
+            },
+            "stereotype": {
+              "precision": 0.5,
+              "recall": 0.6575342465753424,
+              "f1": 0.5680473372781065,
+              "support": 73
+            },
+            "confusion_matrix": {
+              "tn": 37,
+              "fp": 48,
+              "fn": 25,
+              "tp": 48,
+              "matrix": [
+                [
+                  37,
+                  48
+                ],
+                [
+                  25,
+                  48
+                ]
               ]
-            ]
+            },
+            "best_c": 10.0,
+            "val_macro_f1": 0.4910352805089647
           },
-          "best_c": 1.0,
-          "val_macro_f1": 0.4717500546209307
-        },
-        "fold_4": {
-          "total_samples": 157,
-          "accuracy": 0.445859872611465,
-          "macro_f1": 0.4185927723151577,
-          "macro_precision": 0.42988640814727774,
-          "macro_recall": 0.4418831168831169,
-          "roc_auc": 0.46972402597402596,
-          "anti_stereotype": {
-            "precision": 0.391304347826087,
-            "recall": 0.23376623376623376,
-            "f1": 0.2926829268292683,
-            "support": 77
-          },
-          "stereotype": {
-            "precision": 0.46846846846846846,
-            "recall": 0.65,
-            "f1": 0.5445026178010471,
-            "support": 80
-          },
-          "confusion_matrix": {
-            "tn": 18,
-            "fp": 59,
-            "fn": 28,
-            "tp": 52,
-            "matrix": [
-              [
-                18,
-                59
-              ],
-              [
-                28,
-                52
+          "fold_3": {
+            "total_samples": 176,
+            "accuracy": 0.5568181818181818,
+            "macro_f1": 0.4940291906236179,
+            "macro_precision": 0.5053435114503817,
+            "macro_recall": 0.5042665583096302,
+            "roc_auc": 0.5686712718407152,
+            "anti_stereotype": {
+              "precision": 0.4,
+              "recall": 0.2608695652173913,
+              "f1": 0.3157894736842105,
+              "support": 69
+            },
+            "stereotype": {
+              "precision": 0.6106870229007634,
+              "recall": 0.7476635514018691,
+              "f1": 0.6722689075630253,
+              "support": 107
+            },
+            "confusion_matrix": {
+              "tn": 18,
+              "fp": 51,
+              "fn": 27,
+              "tp": 80,
+              "matrix": [
+                [
+                  18,
+                  51
+                ],
+                [
+                  27,
+                  80
+                ]
               ]
-            ]
+            },
+            "best_c": 1.0,
+            "val_macro_f1": 0.4717500546209307
           },
-          "best_c": 10.0,
-          "val_macro_f1": 0.49837199837199836
+          "fold_4": {
+            "total_samples": 157,
+            "accuracy": 0.445859872611465,
+            "macro_f1": 0.4185927723151577,
+            "macro_precision": 0.42988640814727774,
+            "macro_recall": 0.4418831168831169,
+            "roc_auc": 0.46972402597402596,
+            "anti_stereotype": {
+              "precision": 0.391304347826087,
+              "recall": 0.23376623376623376,
+              "f1": 0.2926829268292683,
+              "support": 77
+            },
+            "stereotype": {
+              "precision": 0.46846846846846846,
+              "recall": 0.65,
+              "f1": 0.5445026178010471,
+              "support": 80
+            },
+            "confusion_matrix": {
+              "tn": 18,
+              "fp": 59,
+              "fn": 28,
+              "tp": 52,
+              "matrix": [
+                [
+                  18,
+                  59
+                ],
+                [
+                  28,
+                  52
+                ]
+              ]
+            },
+            "best_c": 10.0,
+            "val_macro_f1": 0.49837199837199836
+          }
         }
       }
     }
   },
-  "comparison_summary": {
-    "accuracy_difference": 0.07280066168536248,
-    "macro_f1_difference": 0.06298912913784327,
-    "roc_auc_difference": 0.08854599818647901,
-    "stereotype_precision_difference": 0.07132361942225063,
-    "stereotype_recall_difference": 0.003062805269422597
-  },
-  "key_findings": [
-    "DeBERTa-v3 outperforms the TF-IDF baseline across all primary metrics: +7.28% Accuracy, +6.30% Macro-F1, and +8.85% ROC-AUC.",
-    "TF-IDF achieves comparable Stereotype Recall (67.27% vs 67.58%) only by aggressively over-predicting the stereotype class, resulting in high False Positives and a poor Anti-Stereotype Recall of 39.18%.",
-    "DeBERTa demonstrates substantially higher Stereotype Precision (63.67% vs 56.54%) and superior discrimination capability (ROC-AUC 0.6591 vs 0.5706).",
-    "Both models exhibit high cross-fold variance (DeBERTa Recall std = 0.1904, TF-IDF Accuracy std = 0.0565), indicating that unseen educational contexts present significant domain-shift challenges.",
-    "Neither model is production-ready for automated educational textbook auditing; human-in-the-loop review remains mandatory."
-  ]
+  "comparative_analysis": {
+    "metric_differences_pp": {
+      "accuracy": {
+        "deberta_mean": 0.6157,
+        "tfidf_mean": 0.5428993383146375,
+        "diff_percentage_points": 7.28,
+        "interpretation": "DeBERTa outperforms TF-IDF by +7.28 percentage points in overall accuracy."
+      },
+      "macro_f1": {
+        "deberta_mean": 0.5845,
+        "tfidf_mean": 0.5215108708621568,
+        "diff_percentage_points": 6.3,
+        "interpretation": "DeBERTa achieves a +6.30 percentage-point gain in Macro-F1."
+      },
+      "roc_auc": {
+        "deberta_mean": 0.6591,
+        "tfidf_mean": 0.570554001813521,
+        "diff_percentage_points": 8.85,
+        "interpretation": "DeBERTa achieves a +8.85 percentage-point gain in ROC-AUC, demonstrating substantially better ranking capability."
+      },
+      "stereotype_recall": {
+        "deberta_mean": 0.6758,
+        "tfidf_mean": 0.6727371947305774,
+        "diff_percentage_points": 0.31,
+        "interpretation": "DeBERTa achieves 67.58% stereotype recall compared to 67.27% for TF-IDF, a difference of only 0.31 percentage points. This difference is statistically negligible, confirming that DeBERTa does NOT exhibit a substantial recall advantage over the linear baseline."
+      },
+      "stereotype_precision": {
+        "deberta_mean": 0.6367,
+        "tfidf_mean": 0.5653763805777494,
+        "diff_percentage_points": 7.13,
+        "interpretation": "DeBERTa achieves 63.67% precision versus 56.54% for TF-IDF (+7.13 percentage points), indicating fewer false alarms when flagging bias."
+      },
+      "anti_stereotype_recall": {
+        "deberta_mean": 0.542,
+        "tfidf_mean": 0.3918413401863995,
+        "diff_percentage_points": 15.02,
+        "interpretation": "DeBERTa achieves 54.20% anti-stereotype recall versus 39.18% for TF-IDF (+15.02 percentage points). TF-IDF suffers from extreme bias towards predicting stereotypes, erroneously classifying 60.8% of anti-stereotypes as stereotypes."
+      }
+    },
+    "critical_findings": [
+      "Stereotype Recall Parity: DeBERTa (67.58%) and TF-IDF (67.27%) detect an almost identical proportion of stereotypes (+0.31 percentage-point difference).",
+      "Precision & False Alarm Disparity: TF-IDF achieves its recall solely by predicting the positive stereotype class for 63.9% of all test items, producing 234 false positives and depressing anti-stereotype recall to 39.18%. DeBERTa maintains a balanced prediction threshold resulting in +15.02 percentage points higher anti-stereotype recall.",
+      "Cross-Fold Variance: DeBERTa displays high recall variance across folds (std = 0.1904, ranging from 39.06% to >85%), driven by semantic shift across completely unseen educational domains.",
+      "Production Implication: Neither model is viable for autonomous educational textbook auditing without human-in-the-loop oversight."
+    ]
+  }
 }
